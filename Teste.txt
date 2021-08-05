@@ -1,5 +1,10 @@
-teste
+Links úteis:
 
-teste 2
+http://www.comofazerascoisas.com.br/projeto-arduino-com-display-lcd.html
+https://gist.github.com/RonilsonSantos/d451798a65a17d171cc9cd7dd1fedd41
+https://www.youtube.com/watch?v=KqrTMKP4aLU&ab_channel=RenataR%C3%BAbiaBarcellos
+https://www.youtube.com/watch?v=fvfiJEyRNq4&ab_channel=RonilsonBezerra
 
-teste 3
+
+
+Documento drive: https://docs.google.com/document/d/1sUOH1zXij9mbZZ2_WTL-WZy-trh5xHmyCbpqJhTD9dY/edit#
