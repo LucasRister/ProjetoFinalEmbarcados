@@ -1,167 +1,71 @@
-#include <Arduino_FreeRTOS.h>
 #include <LiquidCrystal.h>
+#include <stdio.h>
+#include <Arduino_FreeRTOS.h>
+#include "task.h"
+#include <queue.h>
+#define tempoDebounce 50
 
-LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
+volatile int32_t result =0; //var que recebe dados da entrada
+volatile int decimal = 0;   //var que recebe conversao de Bin to Dec
 
-// define as tarefas
-void TaskConvert( void *pvParameters );
+QueueHandle_t queue;
+QueueHandle_t queue2;
+ 
+TaskHandle_t process;
+TaskHandle_t Show;
+TaskHandle_t Input; 
+
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
 void setup() {
-  
-  // inicializa comunicacao serial a 9600 bits por segundos
+  pinMode(10, OUTPUT);
+  digitalWrite(10, HIGH);
+
+  lcd.begin(16, 2);
   Serial.begin(9600);
   
-  while (!Serial) {
-    ;
-  }
+  queue = xQueueCreate(1, sizeof(int));
+  queue2 = xQueueCreate(1, sizeof(int));
 
-  // Configura as tarefas para rodarem independentes
-  xTaskCreate(
-    TaskConvert
-    ,  "Convert"   // Nome da tarefa
-    ,  128  // Tamanho da pilha
-    ,  NULL
-    ,  2  // Prioridade, em que 3 (configMAX_PRIORITIES - 1) para prioridade maxima, e 0 para a prioridade mais baixa.
-    ,  NULL );
-
+  xTaskCreate(Input1,  "Input" , 128, NULL, 2 , &Input );
+  xTaskCreate(process1,  "process" , 128, NULL, 2 , &process );
+  xTaskCreate(Show1,  "Show" , 128, NULL, 1 , &Show );
 }
 
 void loop()
 {
-
+//Fluxo acontece nas Tasks
 }
 
-/*--------------------------------------------------*/
-/*--------------------- Tarefas --------------------*/
-/*--------------------------------------------------*/
+static void  Input1(void *pvParameters){ //Task para coletar os btns de entrada
 
-void TaskConvert(void *pvParameters)
-{
-  (void) pvParameters;
-
-//variaveis
-/*BUTTONS*/
-int pinbtn000001 = 19;
-int pinbtn000010 = 18;
-int pinbtn000100 = 17;
-int pinbtn001000 = 16;
-int pinbtn010000 = 15;
-int pinbtn100000 = 14;
-int btnsend 10;
-/*BUTTONSSTATE*/
-int pinbtnState000001 = 0;
-int pinbtnState000010 = 0;
-int pinbtnState000100 = 0;
-int pinbtnState001000 = 0;
-int pinbtnState010000 = 0;
-int pinbtnState100000 = 0;
-void setup() {
-
-    /* SET MODE BUTTONS */
-    pinMode(pinbtn000001,INPUT);
-    pinMode(pinbtn000010,INPUT);
-    pinMode(pinbtn000100,INPUT);
-    pinMode(pinbtn001000,INPUT);
-    pinMode(pinbtn010000,INPUT);
-    pinMode(pinbtn100000,INPUT);
-    pinMode(btnSend,INPUT);
+int state;
+  for(;;){
+      int valBotoes = analogRead(A0);
     
-    
-    //define o número de colunas e linhas do LCD
-    lcd.begin(16, 2);
-    lcd.setCursor(0, 0);
-}
-void setState(int pin){
-  switch (pin) {
-    case 14:
-        pinbtnState100000 = ( pinbtnState100000 == 0 ) ? 1 : 0;
-        delay(200);
-        break;
-    case 15:
-      	pinbtnState010000 = ( pinbtnState010000 == 0 ) ? 1 : 0;
-    	  delay(200);
-        break;
-    case 16:
-      	pinbtnState001000 = ( pinbtnState001000 == 0 ) ? 1 : 0;
-    	  delay(200);
-        break;
-    case 17:
-      	pinbtnState000100 = ( pinbtnState000100 == 0 ) ? 1 : 0;
-    	  delay(200);
-        break;
-    case 18:
-      	pinbtnState000010 = ( pinbtnState000010 == 0 ) ? 1 : 0;
-    	  delay(200);
-        break;
-    case 19:
-      	pinbtnState000001 = ( pinbtnState000001 == 0 ) ? 1 : 0;
-    	  delay(200);
-        break;
-    default:
-    break;
+      if ((valBotoes < 800) && (valBotoes >= 600)) {
+         state = 1; // condicao para o btn SELECT
+         xQueueSend(queue, &state, portMAX_DELAY);
+         
+      } else if ((valBotoes < 600) && (valBotoes >= 400)) {
+         state = 2; // condicao para o btn LEFT;
+         xQueueSend(queue, &state, portMAX_DELAY);
+         
+      } else if ((valBotoes < 400) && (valBotoes >= 200)) {
+         state = 4; // condicao para o btn UP;
+         xQueueSend(queue, &state, portMAX_DELAY);
+         
+      } else if ((valBotoes < 200) && (valBotoes >= 60)) {
+         state = 3; // condicao para o btn DOWN;
+         xQueueSend(queue, &state, portMAX_DELAY);
+         
+      } else if  (valBotoes < 60) {
+         state = 5; // condicao para o btn RIGHT;
+         xQueueSend(queue, &state, portMAX_DELAY);
+         
+      } else {
+         state = 0; // condicao para o btn EMPTY;
+         xQueueSend(queue, &state, portMAX_DELAY);
+      }   
   }
-
-}
-
-//funcao
-  for (;;) // A Tarefa nunca retorna ou sai.
-
-//Algoritmo conversor bin pra dec
-int BinToDec(char *s) {
-  int result = 0;
-  while(*s) {
-    result <<= 1;
-    if(*s++ == '1') result |= 1;
-  }
-  return result;
-}
-
-void convert(){
-  	lcd.clear();
-  	printBin();
-  	char binary [7];
-
-  
-  	String strBinario = (
-      String(pinbtnState100000)+
-      String(pinbtnState010000)+
-      String(pinbtnState001000)+
-      String(pinbtnState000100)+
-      String(pinbtnState000010)+
-      String(pinbtnState000001)
-      );
-
-  	strBinario.toCharArray(binary,7);
-  
-  	int decimal = BinToDec(binary);
-  	lcd.setCursor(0, 1);
-  	lcd.print("Decimal:");
-    lcd.print(decimal);
- }
-void printBin(){
-  lcd.setCursor(0, 0);
-  lcd.print("Binario:");
-  //Print binarios
-  lcd.print(pinbtnState100000);
-  lcd.print(pinbtnState010000);
-  lcd.print(pinbtnState001000);
-  lcd.print(pinbtnState000100);
-  lcd.print(pinbtnState000010);
-  lcd.print(pinbtnState000001);
-}
-
-void loop() {
-  	//Pressionou botão
-  	if(digitalRead(pinbtn000001) == LOW) setState(pinbtn000001);
-  	if(digitalRead(pinbtn000010) == LOW) setState(pinbtn000010);
-  	if(digitalRead(pinbtn000100) == LOW) setState(pinbtn000100);
-  	if(digitalRead(pinbtn001000) == LOW) setState(pinbtn001000);
-  	if(digitalRead(pinbtn010000) == LOW) setState(pinbtn010000);
-  	if(digitalRead(pinbtn100000) == LOW) setState(pinbtn100000);
-  	printBin();
-
-  //ENVIAR
-    if(digitalRead(btnSend) == LOW)convert();
-  	
-  	delay(50);
 }
