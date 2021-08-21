@@ -52,11 +52,11 @@ int state;
          xQueueSend(queue, &state, portMAX_DELAY);
          
       } else if ((valBotoes < 400) && (valBotoes >= 200)) {
-         state = 4; // condicao para o btn UP;
+         state = 4; // condicao para o btn DOWN;
          xQueueSend(queue, &state, portMAX_DELAY);
          
       } else if ((valBotoes < 200) && (valBotoes >= 60)) {
-         state = 3; // condicao para o btn DOWN;
+         state = 3; // condicao para o btn UP;
          xQueueSend(queue, &state, portMAX_DELAY);
          
       } else if  (valBotoes < 60) {
