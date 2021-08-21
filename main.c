@@ -84,12 +84,12 @@ static void process1(void *pvParameters) // Task para executar as funcoes refere
       xQueueReceive(queue, &state1, portMAX_DELAY);
       if ((millis() - delayBotao) > tempoDebounce) {
          if ((state1 != 0) && (estadoBotaoAnt == 0) ) {        
-              if(state1 == 2){ //se btn RIGHT pressionado 
+              if(state1 == 2){ //se btn LEFT pressionado 
                 result = result*10 + 1; //recebe 1 e pula para o proximo digito
                 input = 0; // Seta o display para mostrar os dados de entrada
                 xQueueSend(queue2, &input, portMAX_DELAY);
               }
-              if(state1 == 5){ // se btn LEFT pressionado
+              if(state1 == 5){ // se btn RIGHT pressionado
                 result = result*10; // recebe 0 e pula para o proximo digito
                 input = 0;  //Seta o display para mostrar os dados de entrada
                 xQueueSend(queue2, &input, portMAX_DELAY);
